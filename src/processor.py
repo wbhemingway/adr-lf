@@ -1,7 +1,11 @@
+import hashlib
 import os
+
 from pypdf import PdfReader, PdfWriter
+
 from config import config_manager
 from logger import app_logger
+
 
 class PDFProcessor:
     def __init__(self):
@@ -16,16 +20,20 @@ class PDFProcessor:
         self.total_pages = len(self.reader.pages)
         app_logger.info(f"PDF loaded. Total pages: {self.total_pages}")
 
-        # Check if we have a saved session for this file
-        last_file = config_manager.get("last_processed_file")
-        if last_file == file_path:
+        # Hash the file path so PII is not saved in config.json
+        path_hash = hashlib.sha256(file_path.encode('utf-8')).hexdigest()
+
+        # Check if we have a saved session for this file hash
+        last_file_hash = config_manager.get("last_processed_file_hash")
+        
+        if last_file_hash == path_hash:
             saved_index = config_manager.get("last_processed_index", 0)
             # If the file was already fully processed, start over at 0
             if saved_index >= self.total_pages - 1:
                 return 0
             return saved_index
         else:
-            config_manager.set("last_processed_file", file_path)
+            config_manager.set("last_processed_file_hash", path_hash)
             config_manager.set("last_processed_index", 0)
             return 0
 
@@ -77,7 +85,7 @@ class PDFProcessor:
         with open(output_path, "wb") as f:
             writer.write(f)
 
-        app_logger.info(f"Page {page_index} saved to: {output_path}")
+        app_logger.info(f"Page {page_index} saved successfully to output directory.")
         return output_path
 
     def update_session(self, page_index: int):

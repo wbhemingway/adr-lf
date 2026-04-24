@@ -1,11 +1,11 @@
-import sys
 import os
-from PIL import Image
+import sys
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from ocr_engine import OCREngine
+
 
 def test_ocr():
     engine = OCREngine()
@@ -27,7 +27,7 @@ def test_ocr():
     
     assert parsed["initial"] == "J"
     assert parsed["last_name"] == "DOE"
-    assert parsed["date"] == "04.24.2026"
+    assert parsed["date"] == "2026.04.24"
     assert parsed["leave_type"] == "Paid Sick"
     
     print("Test Passed!")

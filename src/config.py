@@ -19,7 +19,7 @@ class ConfigManager:
     def __init__(self):
         self.config = {
             "output_directory": "",
-            "last_processed_file": "",
+            "last_processed_file_hash": "",
             "last_processed_index": 0,
             "theme": "System"
         }
