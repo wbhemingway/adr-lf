@@ -22,8 +22,7 @@ if not exist "bin\poppler\Library\bin\pdftoppm.exe" (
 )
 
 echo Installing requirements...
-pip install -r requirements.txt
-pip install nuitka
+uv sync
 
 echo.
 echo Starting Nuitka Compilation...
@@ -35,7 +34,7 @@ REM --standalone: Creates a self-contained folder
 REM --windows-console-mode=disable: Hides the command prompt when running the app
 REM --enable-plugin=tk-inter: Bundles Tkinter dependencies
 REM --include-data-dir: Bundles customtkinter assets
-python -m nuitka --standalone --windows-console-mode=disable --enable-plugin=tk-inter --include-data-dir=%VIRTUAL_ENV%\Lib\site-packages\customtkinter=customtkinter src/main.py
+uv run python -m nuitka --standalone --windows-console-mode=disable --enable-plugin=tk-inter --include-data-dir=.venv\Lib\site-packages\customtkinter=customtkinter src/main.py
 
 echo.
 echo =======================================

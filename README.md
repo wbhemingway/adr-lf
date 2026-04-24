@@ -17,7 +17,7 @@ If you are running from source (e.g., WSL or Linux):
 ```bash
 sudo apt-get update
 sudo apt-get install -y poppler-utils tesseract-ocr python3-tk
-pip install -r requirements.txt
+uv sync
 ```
 
 
