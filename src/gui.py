@@ -2,11 +2,9 @@ import customtkinter as ctk
 import threading
 from tkinter import filedialog, messagebox, Canvas
 from PIL import Image, ImageTk
-from pdf2image import convert_from_path
 
 from config import config_manager
 from processor import PDFProcessor
-from ocr_engine import OCREngine
 from logger import app_logger
 
 class SettingsWindow(ctk.CTkToplevel):
@@ -56,7 +54,7 @@ class SettingsWindow(ctk.CTkToplevel):
         self.parent.canvas.configure(bg=bg_color)
 
 class LeaveSorterApp(ctk.CTk):
-    def __init__(self):
+    def __init__(self, tesseract_path: str, poppler_path: str):
         super().__init__()
 
         self.title("ADR Leave Parser")
@@ -68,8 +66,7 @@ class LeaveSorterApp(ctk.CTk):
         ctk.set_appearance_mode(saved_theme)
         ctk.set_default_color_theme("blue")
 
-        self.processor = PDFProcessor()
-        self.ocr_engine = OCREngine()
+        self.processor = PDFProcessor(tesseract_path, poppler_path)
         
         self.current_page_index = 0
         self.total_pages = 0
@@ -246,16 +243,10 @@ class LeaveSorterApp(ctk.CTk):
 
     def _process_page_thread(self, index: int):
         try:
-            images = convert_from_path(self.current_pdf_path, first_page=index+1, last_page=index+1, dpi=150)
-            if not images:
-                return
+            image, ocr_data = self.processor.get_page_preview(index)
             
-            image = images[0]
             self.base_image = image # Store high-res for zooming
             self.zoom_factor = 1.0  # Reset zoom
-            
-            # OCR
-            ocr_data = self.ocr_engine.process_image(image)
 
             # Update GUI from main thread
             self.after(0, self._update_gui_after_thread, ocr_data)
@@ -278,12 +269,7 @@ class LeaveSorterApp(ctk.CTk):
             self.page_cache[index] = None # Mark as caching
             
         try:
-            images = convert_from_path(self.current_pdf_path, first_page=index+1, last_page=index+1, dpi=150)
-            if not images:
-                return
-            
-            image = images[0]
-            ocr_data = self.ocr_engine.process_image(image)
+            image, ocr_data = self.processor.get_page_preview(index)
             
             with self.prefetch_lock:
                 self.page_cache[index] = (image, ocr_data)

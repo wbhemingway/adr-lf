@@ -7,54 +7,52 @@ from logger import app_logger
 
 app_logger.info("Starting ADR-Universal Leave Sorter...")
 
-# Determine base path for bundled binaries
-if getattr(sys, 'frozen', False):
-    # Running as compiled binary (Nuitka/PyInstaller)
-    base_path = os.path.dirname(sys.executable)
-else:
-    # Running from source
-    base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-def setup_binaries():
+def resolve_binaries():
     """
-    Ensures Tesseract and Poppler are available.
-    On Windows (frozen), it looks for bundled binaries in bin/.
+    Resolves absolute paths for Tesseract and Poppler binaries.
+    On Windows (compiled or dev), it strictly relies on the bundled bin/ directory.
     On Linux/WSL, it relies on system-installed binaries.
     """
-    if platform.system() == "Windows":
-        app_logger.debug("Running on Windows, resolving bundled binaries...")
-        import pytesseract
-        
-        # 1. Tesseract resolution
-        # Check if tesseract is already in PATH (system install)
-        sys_tesseract = shutil.which("tesseract")
-        if sys_tesseract:
-            app_logger.info(f"Using system Tesseract: {sys_tesseract}")
-            pytesseract.pytesseract.tesseract_cmd = sys_tesseract
-        else:
-            # Fallback to bundled
-            tesseract_exe = os.path.join(base_path, 'bin', 'tesseract', 'tesseract.exe')
-            if os.path.exists(tesseract_exe):
-                app_logger.info(f"Using bundled Tesseract: {tesseract_exe}")
-                pytesseract.pytesseract.tesseract_cmd = tesseract_exe
-            else:
-                app_logger.error("Tesseract not found in system or bundled bin/")
-        
-        # 2. Poppler resolution
-        # Check if pdftoppm is already in PATH
-        if not shutil.which("pdftoppm"):
-            # Fallback to bundled poppler
-            poppler_bin = os.path.join(base_path, 'bin', 'poppler', 'Library', 'bin')
-            if os.path.exists(poppler_bin):
-                app_logger.info(f"Using bundled Poppler: {poppler_bin}")
-                os.environ["PATH"] += os.pathsep + poppler_bin
-            else:
-                app_logger.error("Poppler (pdftoppm) not found in system or bundled bin/")
-        else:
-            app_logger.info("Using system Poppler (pdftoppm)")
+    if getattr(sys, 'frozen', False):
+        base_path = os.path.dirname(sys.executable)
+    else:
+        base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-setup_binaries()
+    if platform.system() == "Windows":
+        tesseract_path = os.path.join(base_path, 'bin', 'tesseract', 'tesseract.exe')
+        tessdata_path = os.path.join(base_path, 'bin', 'tesseract', 'tessdata')
+        poppler_path = os.path.join(base_path, 'bin', 'poppler', 'Library', 'bin')
+    else:
+        tesseract_path = shutil.which("tesseract")
+        tessdata_path = os.getenv("TESSDATA_PREFIX", "")
+        poppler_bin = shutil.which("pdftoppm")
+        poppler_path = os.path.dirname(poppler_bin) if poppler_bin else None
+
+    # Validation
+    errors = []
+    if not tesseract_path or not os.path.exists(tesseract_path):
+        errors.append(f"Tesseract binary not found at: {tesseract_path}")
+    if not poppler_path or not os.path.exists(poppler_path):
+        errors.append(f"Poppler bin folder not found at: {poppler_path}")
+    if platform.system() == "Windows" and tessdata_path and not os.path.exists(tessdata_path):
+        errors.append(f"Tessdata folder not found at: {tessdata_path}")
+    
+    if platform.system() == "Windows" and tessdata_path and os.path.exists(tessdata_path):
+        if not os.path.exists(os.path.join(tessdata_path, "eng.traineddata")):
+            app_logger.warning("eng.traineddata not found in tessdata folder.")
+            
+    if errors:
+        for err in errors:
+            app_logger.critical(err)
+        app_logger.critical("Failed to resolve critical dependencies. Exiting.")
+        sys.exit(1)
+
+    if tessdata_path:
+        os.environ["TESSDATA_PREFIX"] = tessdata_path
+
+    return tesseract_path, poppler_path
 
 if __name__ == "__main__":
-    app = LeaveSorterApp()
+    tesseract_path, poppler_path = resolve_binaries()
+    app = LeaveSorterApp(tesseract_path=tesseract_path, poppler_path=poppler_path)
     app.mainloop()

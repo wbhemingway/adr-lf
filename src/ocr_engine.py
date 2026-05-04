@@ -3,10 +3,25 @@ import pytesseract
 from PIL import Image, ImageOps, ImageEnhance
 from logger import app_logger
 from datetime import datetime
+from pdf2image import convert_from_path
 
 class OCREngine:
-    def __init__(self):
-        pass
+    def __init__(self, tesseract_path: str):
+        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+
+    def get_page_image(self, pdf_path: str, page_index: int, poppler_path: str):
+        images = convert_from_path(
+            pdf_path,
+            first_page=page_index + 1,
+            last_page=page_index + 1,
+            dpi=150,
+            poppler_path=poppler_path
+        )
+        if not images:
+            raise ValueError(f"Could not extract page {page_index + 1}")
+        image = images[0]
+        ocr_data = self.process_image(image)
+        return image, ocr_data
 
     def process_image(self, image: Image.Image) -> dict:
         """

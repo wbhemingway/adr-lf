@@ -1,0 +1,16 @@
+ADR LEAVE PARSER SECURITY AND PRIVACY
+
+DATA PRIVACY
+This application is designed with a privacy first approach. All processing of documents and personal information happens entirely on your local computer.
+
+OFFLINE PROCESSING
+The program does not require or use an internet connection to function. It is completely air-gapped to ensure that no data is ever transmitted to an external server or cloud service.
+
+DOCUMENT SECURITY
+No copies of your documents are stored by the application. The program only reads the files you select to perform the renaming task.
+
+LOCAL CONFIGURATION
+Any settings or session history are stored locally on your computer. Sensitive identifiers, such as file paths, are hashed before being saved to ensure that personally identifiable information is not stored in plain text within configuration files.
+
+CONTACT
+If you have questions about the security of this tool please contact the developer directly @ william.b.hemingway@gmail.com or https://github.com/wbhemingway.

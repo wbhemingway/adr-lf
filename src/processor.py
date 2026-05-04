@@ -5,13 +5,16 @@ from pypdf import PdfReader, PdfWriter
 
 from config import config_manager
 from logger import app_logger
+from ocr_engine import OCREngine
 
 
 class PDFProcessor:
-    def __init__(self):
+    def __init__(self, tesseract_path: str, poppler_path: str):
         self.reader = None
         self.total_pages = 0
         self.current_pdf_path = ""
+        self.poppler_path = poppler_path
+        self.ocr_engine = OCREngine(tesseract_path)
 
     def load_pdf(self, file_path: str):
         app_logger.info(f"Loading PDF: {file_path}")
@@ -36,6 +39,9 @@ class PDFProcessor:
             config_manager.set("last_processed_file_hash", path_hash)
             config_manager.set("last_processed_index", 0)
             return 0
+
+    def get_page_preview(self, page_index: int):
+        return self.ocr_engine.get_page_image(self.current_pdf_path, page_index, self.poppler_path)
 
     def save_page(self, page_index: int, initial: str, last_name: str, leave_type: str, date_str: str) -> str:
         """
