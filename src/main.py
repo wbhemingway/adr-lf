@@ -39,12 +39,25 @@ def resolve_binaries():
     
     if platform.system() == "Windows" and tessdata_path and os.path.exists(tessdata_path):
         if not os.path.exists(os.path.join(tessdata_path, "eng.traineddata")):
-            app_logger.warning("eng.traineddata not found in tessdata folder.")
+            errors.append(f"eng.traineddata not found in tessdata folder at: {tessdata_path}")
             
     if errors:
+        error_msg = "Failed to resolve critical dependencies:\n\n" + "\n".join(errors)
         for err in errors:
             app_logger.critical(err)
         app_logger.critical("Failed to resolve critical dependencies. Exiting.")
+        
+        # Show explicit popup to the user
+        try:
+            import tkinter as tk
+            from tkinter import messagebox
+            root = tk.Tk()
+            root.withdraw() # Hide the main window
+            messagebox.showerror("Initialization Error", error_msg)
+            root.destroy()
+        except Exception as e:
+            app_logger.error(f"Could not display error popup: {e}")
+            
         sys.exit(1)
 
     if tessdata_path:
