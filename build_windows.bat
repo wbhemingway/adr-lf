@@ -7,7 +7,7 @@ echo =======================================
 echo.
 
 REM Define project variables
-set VERSION=v1
+set VERSION=v0.1.2
 set DIST_NAME=ADR_Leave_Parser_%VERSION%
 set FINAL_EXE=adr_lf.exe
 

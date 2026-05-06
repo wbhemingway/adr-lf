@@ -13,7 +13,7 @@ def resolve_binaries():
     On Windows (compiled or dev), it strictly relies on the bundled bin/ directory.
     On Linux/WSL, it relies on system-installed binaries.
     """
-    if getattr(sys, 'frozen', False):
+    if getattr(sys, 'frozen', False) or "__compiled__" in globals():
         base_path = os.path.dirname(sys.executable)
     else:
         base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
